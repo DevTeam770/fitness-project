@@ -1,6 +1,7 @@
-# 🏋️ Fitness Tracker API
+# 🏋️ Fitness Tracker
 
-> Backend API לניהול אימוני כושר, מעקב אחר Progressive Overload ותיעוד התקדמות גופנית.
+> אפליקציית כושר מלאה למעקב אחר אימונים, Progressive Overload ותיעוד התקדמות גופנית.
+> **React Native (Expo)** בפרונט + **FastAPI** בבאקאנד.
 
 ---
 
@@ -11,7 +12,8 @@
 - [מבנה הפרויקט](#מבנה-הפרויקט)
 - [מודל הנתונים](#מודל-הנתונים)
 - [API Endpoints](#api-endpoints)
-- [הרצה מקומית עם Docker](#הרצה-מקומית-עם-docker)
+- [הרצת הבאקאנד עם Docker](#הרצת-הבאקאנד-עם-docker)
+- [הרצת הפרונט עם Expo](#הרצת-הפרונט-עם-expo)
 - [משתני סביבה](#משתני-סביבה)
 - [אבטחה](#אבטחה)
 
@@ -19,10 +21,10 @@
 
 ## סקירה כללית
 
-Fitness Tracker API הוא שרת Backend שנבנה עם **FastAPI** ומאפשר למשתמשים:
+Fitness Tracker מאפשר למשתמשים:
 
 - 📝 **לתעד אימונים** – פתיחת אימון חי, הוספת סטים (משקל + חזרות) בזמן אמת וסגירת האימון
-- 📈 **לעקוב אחר התקדמות** – צפייה בגרף נפח אימון לאורך זמן ורשומות שיא אישי (PR) לפי תרגיל
+- 📈 **לעקוב אחר התקדמות** – גרף נפח אימון לאורך זמן ושיא אישי (PR) לפי תרגיל
 - 🗂️ **לנהל תבניות אימון** – יצירת תוכניות (Push/Pull/Legs וכד') לשימוש חוזר
 - 📸 **לתעד שינוי גופני** – העלאת תמונות התקדמות לאחסון בענן (MinIO/S3)
 
@@ -31,30 +33,43 @@ Fitness Tracker API הוא שרת Backend שנבנה עם **FastAPI** ומאפש
 ## ארכיטקטורה וטכנולוגיות
 
 ```
-┌─────────────┐    ┌──────────────────┐    ┌──────────────┐
-│   Client    │───▶│  FastAPI Backend │───▶│  PostgreSQL  │
-│  (Mobile)   │    │   (Port 8000)    │    │  (Port 5432) │
-└─────────────┘    └──────────────────┘    └──────────────┘
-                            │
-                            ▼
-                   ┌──────────────────┐
-                   │  MinIO Storage   │
-                   │  (Port 9000)     │
-                   │  Console: 9001   │
-                   └──────────────────┘
+┌──────────────────────┐    ┌──────────────────┐    ┌──────────────┐
+│  React Native (Expo) │───▶│  FastAPI Backend │───▶│  PostgreSQL  │
+│  Android / iOS       │    │   (Port 8000)    │    │  (Port 5432) │
+└──────────────────────┘    └──────────────────┘    └──────────────┘
+                                      │
+                                      ▼
+                             ┌──────────────────┐
+                             │  MinIO Storage   │
+                             │  (Port 9000)     │
+                             │  Console: 9001   │
+                             └──────────────────┘
 ```
+
+### Frontend
 
 | שכבה | טכנולוגיה | תיאור |
 |------|-----------|-------|
-| Web Framework | **FastAPI** 0.110+ | בניית REST API עם תיעוד Swagger אוטומטי |
+| Framework | **React Native 0.85** + **Expo 56** | אפליקציה נייטיב ל-Android ו-iOS |
+| Language | **TypeScript 6** | טיפוסים סטטיים לכל הפרויקט |
+| Navigation | **React Navigation 7** | ניווט Stack + Bottom Tabs |
+| HTTP Client | **Axios** | קריאות API עם JWT interceptor אוטומטי |
+| Storage | **AsyncStorage** | שמירת Token ופרטי משתמש מקומית |
+| Charts | **Victory Native** | גרפי התקדמות ואנליטיקה |
+| Icons | **Lucide React Native** | אייקונים לטאב-בר ולמסכים |
+
+### Backend
+
+| שכבה | טכנולוגיה | תיאור |
+|------|-----------|-------|
+| Web Framework | **FastAPI** 0.110+ | REST API עם תיעוד Swagger אוטומטי |
 | ORM | **SQLAlchemy** 2.0 | גישה לבסיס הנתונים עם Typed Mapped Columns |
 | Validation | **Pydantic** v2 | ולידציה ו-serialization של נתונים |
 | Database | **PostgreSQL** 15 | בסיס נתונים ראשי |
 | Object Storage | **MinIO** (S3-Compatible) | אחסון תמונות התקדמות |
 | Auth | **JWT (python-jose)** | אימות משתמשים עם Access Token |
 | Password Hashing | **Argon2** | הצפנת סיסמאות מאובטחת |
-| Containerization | **Docker + Docker Compose** | הרצת כל השירותים יחד |
-| ASGI Server | **Uvicorn** | הרצת FastAPI בפרודקשן |
+| Containerization | **Docker + Docker Compose** | הרצת כל שירותי הבאקאנד יחד |
 
 ---
 
@@ -62,32 +77,54 @@ Fitness Tracker API הוא שרת Backend שנבנה עם **FastAPI** ומאפש
 
 ```
 fitness-project-main/
-├── docker-compose.yml          # הגדרת כל השירותים (DB, Storage, Backend)
-├── .env                        # משתני סביבה (לא לשמור ב-Git!)
+├── docker-compose.yml              # הגדרת שירותי הבאקאנד (DB, Storage, API)
+├── .env                            # משתני סביבה (לא לשמור ב-Git!)
+│
+├── frontend/                       # אפליקציית React Native
+│   ├── App.tsx                     # נקודת כניסה – NavigationContainer + AuthProvider
+│   ├── index.ts
+│   ├── app.json                    # הגדרות Expo (שם, אייקון, splash)
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── assets/                     # אייקונים ותמונות אפליקציה
+│   └── src/
+│       ├── api/
+│       │   └── client.ts           # Axios instance + JWT interceptor אוטומטי
+│       ├── context/
+│       │   └── AuthContext.tsx     # ניהול מצב התחברות (login/logout/token)
+│       ├── navigation/
+│       │   ├── AppNavigator.tsx    # Stack navigator – Login vs. Main
+│       │   └── TabNavigator.tsx    # Bottom tabs (בית / אימון / גרפים / פרופיל)
+│       ├── screens/
+│       │   ├── LoginScreen.tsx     # מסך התחברות
+│       │   ├── HomeScreen.tsx      # מסך הבית
+│       │   ├── WorkoutScreen.tsx   # מסך אימון פעיל
+│       │   ├── AnalyticsScreen.tsx # מסך גרפים ואנליטיקה
+│       │   └── ProfileScreen.tsx   # מסך פרופיל ומעקב גופני
+│       └── types/
+│           └── index.ts            # TypeScript interfaces (User, Exercise, Session...)
 │
 └── backend/
     ├── Dockerfile
     ├── requirements.txt
     └── app/
-        ├── main.py             # נקודת הכניסה, הגדרת FastAPI ו-CORS
-        ├── database.py         # חיבור ל-PostgreSQL (SQLAlchemy engine)
-        ├── models.py           # מודלי SQLAlchemy (טבלאות בבסיס הנתונים)
-        ├── schemas.py          # מודלי Pydantic (request/response)
-        ├── crud.py             # פעולות CRUD על בסיס הנתונים
-        ├── security.py         # יצירה ואימות של JWT tokens
-        ├── dependencies.py     # Dependency Injection (get_current_user)
-        │
+        ├── main.py                 # נקודת הכניסה, הגדרת FastAPI ו-CORS
+        ├── database.py             # חיבור ל-PostgreSQL (SQLAlchemy engine)
+        ├── models.py               # מודלי SQLAlchemy (טבלאות בבסיס הנתונים)
+        ├── schemas.py              # מודלי Pydantic (request/response)
+        ├── crud.py                 # פעולות CRUD על בסיס הנתונים
+        ├── security.py             # יצירה ואימות של JWT tokens
+        ├── dependencies.py         # Dependency Injection (get_current_user)
         ├── routers/
-        │   ├── auth.py         # הרשמה והתחברות
-        │   ├── users.py        # ניהול פרופיל משתמש
-        │   ├── exercises.py    # ניהול מאגר תרגילים
-        │   ├── sessions.py     # ניהול אימונים חיים
-        │   ├── templates.py    # ניהול תבניות אימון
-        │   ├── analytics.py    # נתוני התקדמות ו-PR
-        │   └── history.py      # היסטוריית אימונים
-        │
+        │   ├── auth.py             # הרשמה והתחברות
+        │   ├── users.py            # ניהול פרופיל משתמש
+        │   ├── exercises.py        # ניהול מאגר תרגילים
+        │   ├── sessions.py         # ניהול אימונים חיים
+        │   ├── templates.py        # ניהול תבניות אימון
+        │   ├── analytics.py        # נתוני התקדמות ו-PR
+        │   └── history.py          # היסטוריית אימונים
         └── services/
-            ├── storage.py      # שירות העלאה ל-MinIO/S3
+            ├── storage.py          # שירות העלאה ל-MinIO/S3
             └── notifications.py
 ```
 
@@ -105,8 +142,6 @@ User (משתמש)
  │         └── Exercise (תרגיל: שם + שריר + GIF)
  └── ProgressPicture (תמונת התקדמות)
 ```
-
-### טבלאות מרכזיות
 
 | טבלה | תיאור | שדות מרכזיים |
 |------|-------|-------------|
@@ -161,7 +196,7 @@ User (משתמש)
 
 ---
 
-## הרצה מקומית עם Docker
+## הרצת הבאקאנד עם Docker
 
 ### דרישות מקדימות
 
@@ -203,6 +238,42 @@ curl http://localhost:8000/
 
 ---
 
+## הרצת הפרונט עם Expo
+
+### דרישות מקדימות
+
+- Node.js מותקן
+- Expo Go מותקן על הטלפון ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+- הטלפון והמחשב על אותה רשת Wi-Fi
+
+### שלבי התקנה
+
+**1. עדכון כתובת ה-IP**
+
+פתח את `frontend/src/api/client.ts` ועדכן את ה-IP למחשב שלך:
+```typescript
+const COMPUTER_IP = '192.168.X.X'; // ← שנה לכתובת ה-IP האמיתית שלך
+```
+
+> למציאת ה-IP: `ipconfig` (Windows) / `ifconfig` (Mac/Linux)
+
+**2. התקנת תלויות**
+```bash
+cd frontend
+npm install
+```
+
+**3. הפעלת שרת הפיתוח**
+```bash
+npm start
+```
+
+**4. סריקת QR Code**
+
+סרוק את ה-QR Code שמופיע בטרמינל עם אפליקציית Expo Go על הטלפון.
+
+---
+
 ## משתני סביבה
 
 קובץ `.env` בשורש הפרויקט:
@@ -228,8 +299,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=43200      # 30 ימים
 ## אבטחה
 
 - **סיסמאות** — מוצפנות עם **Argon2** (אלגוריתם ה-hashing המומלץ ביותר כיום)
-- **Authentication** — מבוסס **JWT Bearer Token** עם תפוגה מוגדרת
-- **הגנה מ-IDOR** — כל endpoint מוודא שהמשהשתמש המחובר הוא הבעלים של המשאב
+- **Authentication** — מבוסס **JWT Bearer Token** עם תפוגה מוגדרת (30 ימים)
+- **JWT Interceptor** — הפרונט מזריק את ה-Token אוטומטית לכל קריאת API דרך Axios interceptor
+- **Persistent Session** — ה-Token נשמר ב-AsyncStorage ונטען בכל פתיחת אפליקציה
+- **הגנה מ-IDOR** — כל endpoint בבאקאנד מוודא שהמשתמש המחובר הוא הבעלים של המשאב
 - **ולידציה** — כל הקלטות עוברות ולידציה דרך Pydantic (מניעת ערכים לא תקינים)
 
 ---
