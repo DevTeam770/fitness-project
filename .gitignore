@@ -1,0 +1,6 @@
+# --- Docker Volumes (Local Data) ---
+postgres_data/
+minio_data/
+
+# --- OS temporary files ---
+.DS_Store

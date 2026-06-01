@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fitness_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  storage:
+    image: minio/minio
+    container_name: fitness_storage
+    restart: always
+    ports:
+      - "9000:9000"       # ה-API של האחסון (שם FastAPI מדבר איתו)
+      - "9001:9001"       # ממשק ניהול גרפי בדפדפן (MinIO Console)
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fitness_backend
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      # משתמש ב-db:5432 עבור הרשת הפנימית של דוקר במקום localhost ששובר את החיבור
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      # הגדרות שרת האחסון (MinIO)
+      - STORAGE_ENDPOINT=http://storage:9000
+      - STORAGE_ACCESS_KEY=minio_admin
+      - STORAGE_SECRET_KEY=minio_password
+      - STORAGE_BUCKET_NAME=fitness-assets
+    depends_on:
+      - db
+      - storage
+
+volumes:
+  postgres_data:
+  minio_data:
