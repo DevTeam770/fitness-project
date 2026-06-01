@@ -4,4 +4,4 @@ minio_data/
 
 # --- OS temporary files ---
 .DS_Store
-.env
+.env/
